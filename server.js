@@ -54,8 +54,6 @@ app.get("/add", (req, res) => {
       const channelSurf = await surf.addMembers([userId]);
       const channelSkate = await skate.addMembers([userId]);
 
-      //Query channels
-
       res.status(200).json({
         message: "add member sucess",
         status: "sucess",
