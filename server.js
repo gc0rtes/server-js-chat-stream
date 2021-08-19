@@ -18,22 +18,57 @@ const StreamChat = require("stream-chat").StreamChat;
 
 const serverClient = StreamChat.getInstance(API_KEY, API_SECRET);
 
-//Create a token endpoint
-//Pass the 'username' to URL via the query string
-// http://localhost:3000/token?username=theUserUsername
+// Token endpoint.
+//Obs: JWtoken is created locally. JWT is installed with stream-chat library.
+//  Because the serverClient includes an app secret, the server is able to combine the given user id with the secret to generate a user specific token
+// Pass the 'userId' to URL via the query string
+// http://localhost:3000/token?userId=theUserUsername
 app.get("/token", (req, res) => {
-  const { username } = req.query;
-
-  console.log("I got a request to token endpoint");
+  const { userId } = req.query;
+  console.log("got req from /token endpoint");
   console.log("What is req.query?", req.query);
-  console.log("What is username?", username);
 
-  if (username) {
-    const token = serverClient.createToken(username);
+  if (userId) {
+    // Generate token
+    const token = serverClient.createToken(userId);
     res.status(200).json({ token, status: "sucess" });
   } else {
     res.status(401).json({ message: "invalid request", status: "error" });
   }
+});
+
+// Add channel member endpoint
+//It must be done from the server side since the client-side is not allowed for regular user.
+// http://localhost:3000/add?userId=theUserUsername
+app.get("/add", (req, res) => {
+  const { userId } = req.query;
+  console.log("got req from /add endpoint");
+  console.log("What is userId?", req.query);
+
+  // Add user to default app channels
+  const SubscribeChannels = async (userId) => {
+    //Channels exists on the API already and are hardcoded for now
+    const surf = serverClient.channel("messaging", "surf");
+    const skate = serverClient.channel("messaging", "skate");
+    try {
+      const channelSurf = await surf.addMembers([userId]);
+      const channelSkate = await skate.addMembers([userId]);
+
+      //Query channels
+
+      res.status(200).json({
+        message: "add member sucess",
+        status: "sucess",
+        // channelSkate, //Output: It doesn't say much
+        // channelSurf,
+      });
+    } catch (error) {
+      res.status(401).json({ message: "add member fail", status: "error" });
+      console.log("add members failed", error);
+    }
+  };
+  //Call the function
+  SubscribeChannels(userId);
 });
 
 app.listen(PORT, () => {
